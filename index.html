@@ -1,0 +1,457 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DigitSync Typing Master</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to right, #00c6ff, #0072ff);
+            color: #fff;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+            height: 90%;
+            overflow-y: auto;
+        }
+        .hidden {
+            display: none;
+        }
+        h1, h2 {
+            margin: 10px 0;
+        }
+        p {
+            font-size: 18px;
+            margin: 15px 0;
+        }
+        input, select, button, textarea {
+            font-size: 16px;
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            margin-top: 10px;
+            width: calc(100% - 22px);
+            max-width: 1000px;
+        }
+        button {
+            background-color: #0056b3;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #004494;
+        }
+        .update-button {
+            background-color: #ff9800;
+        }
+        .update-button:hover {
+            background-color: #e68a00;
+        }
+        textarea {
+            height: calc(100vh - 400px);
+            resize: none;
+            width: 100%;
+        }
+        .metrics, .instructions, .timer {
+            margin-top: 20px;
+        }
+        .marquee {
+            width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+            box-sizing: border-box;
+            animation: marquee 15s linear infinite;
+        }
+        @keyframes marquee {
+            0% { transform: translate(100%, 0); }
+            100% { transform: translate(-100%, 0); }
+        }
+        .result-table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        .result-table th, .result-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        .result-table th {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+        .typed-correct {
+            color: green;
+        }
+        .typed-incorrect {
+            color: red;
+        }
+        .completion-image {
+            margin-top: 20px;
+            width: 100px;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" id="login">
+    <h1>Welcome to DigitSync Typing Master!</h1>
+    <div class="marquee">
+        This tool is designed to enhance your typing skills through structured practice.
+    </div>
+    <h6><i>Created by Rouf Uddin Ahmed, Computer Teacher at E-Max Computer Education</i></h6>
+    <p><b>Enter your name and select a duration to start the game.</b></p>
+    <input type="text" id="username" placeholder="Enter your name" />
+    <select id="duration">
+        <option value="300000">5 Minutes</option>
+        <option value="600000">10 Minutes</option>
+        <option value="1800000">30 Minutes</option>
+        <option value="3600000">1 Hour</option>
+    </select>
+    <button onclick="startTyping()">Start Typing</button>
+    <button onclick="openTypingTest()">Typing Test</button>
+    <button class="update-button">Typing Exam (Coming Soon)</button>
+</div>
+
+<div class="container hidden" id="typing-area">
+    <h2>Welcome, <span id="user-display"></span>!</h2>
+    <div class="instructions" id="level-instructions">Start typing anything you like or follow the instructions below:</div>
+    <textarea id="input-area" placeholder="Start typing here..." onkeydown="trackKeys(event)" oninput="checkTyping()" onpaste="return false"></textarea>
+    <div class="metrics">
+        <div>Speed: <span id="speed">0 WPM</span></div>
+        <div class="timer">Time Left: <span id="time-left"></span></div>
+    </div>
+    <button onclick="endTest()">End Test</button>
+</div>
+
+<div class="container hidden" id="typing-test">
+    <h2>Typing Test</h2>
+    <p>Select Difficulty:</p>
+    <button onclick="startParagraphTest('simple')">Simple</button>
+    <button onclick="startParagraphTest('hard')">Hard</button>
+    <div class="hidden" id="paragraph-container">
+        <p id="paragraph-line"></p>
+        <textarea id="paragraph-input" placeholder="Type the line here..." oninput="checkParagraphLine()"></textarea>
+        <p id="accuracy-feedback" style="color: red;"></p>
+        <div id="speed-feedback">Speed: <span id="paragraph-speed">0 WPM</span></div>
+        <img src="" id="completion-image" class="completion-image hidden" alt="Completion Image" />
+        <button onclick="endParagraphTest()">End Test</button>
+    </div>
+</div>
+
+<div class="container hidden" id="result-area">
+    <h2>Typing Results</h2>
+    <table class="result-table">
+        <tr><th>Detail</th><th>Value</th></tr>
+        <tr><td>Name</td><td><span id="result-username"></span></td></tr>
+        <tr><td>Final Speed</td><td id="final-speed"></td></tr>
+        <tr><td>Grade</td><td id="grade"></td></tr>
+        <tr><td>Accuracy</td><td><span id="accuracy"></span>%</td></tr>
+        <tr><td>Backspaces Used</td><td><span id="backspaces"></span></td></tr>
+        <tr><td>Words Typed</td><td><span id="words-typed"></span></td></tr>
+        <tr><td>Sentences Typed</td><td><span id="sentences-typed"></span></td></tr>
+        <tr><td>Letters Typed</td><td><span id="letters-typed"></span></td></tr>
+    </table>
+    <button onclick="printCertificate()">Print Certificate</button>
+    <button onclick="restartTest()">Restart Test</button>
+</div>
+
+<script>
+    let startTime, duration;
+    let backspaceCount = 0;
+    let paragraphStartTime;
+    let currentLineIndex = 0;
+    const levelTexts = {
+        1:  "-\nASDFG ;LKJH \nZXCV .,MNB \nQWERT POIUY \n12345 09876",
+        2: "-\nABCDEFGHIJKLMNOPQRSTUVWXYZ",
+        3: "-\nThe quick brown fox jumps over the lazy dog"
+    };
+
+    const paragraphs = {
+        simple: [
+            "Computers are integral to modern life, influencing how we work, learn, and communicate. From the moment we wake up, we rely on computers for various tasks. In the workplace, computers are essential tools for professionals, allowing them to write reports, analyze data, and communicate with colleagues.", 
+            "The power of computers lies in their ability to process information quickly and accurately. They can perform complex calculations in seconds, which would take humans much longer to complete. In education, computers have revolutionized learning.", 
+            "Students use computers to research topics, write essays, and collaborate on projects. Online learning platforms and educational software provide interactive experiences that enhance understanding. Teachers use computers to prepare lessons, track student progress, and communicate with parents.", 
+            "At home, computers serve as entertainment centers. We use them to stream movies, listen to music, and play video games. Social media platforms, accessed via computers, allow us to stay connected with friends and family across the globe. Computers also help us manage our finances, shop online, and plan travel.", 
+            "Beyond personal use, computers drive advancements in science and technology. They assist in medical research, enabling the development of new treatments and drugs. In engineering, computers are used to design buildings, cars, and airplanes with precision. The field of artificial intelligence, powered by computers, is leading to innovations like self-driving cars and smart assistants.", 
+            "As technology advances, computers become more powerful and compact. Laptops and tablets offer portability, while smartphones provide computer-like functionality in the palm of our hands. Despite these advancements, desktops remain popular for their robustness and capability to handle demanding tasks.", 
+            "Understanding how to use a computer is a vital skill in today's digital world. It opens up career opportunities and enhances personal development. By learning to code, individuals can create software, build websites, and develop apps. Computers have a profound impact on society, shaping the way we interact with the world.", 
+            "They improve efficiency, increase productivity, and provide access to a wealth of information. As we continue to innovate, computers will undoubtedly play an even greater role in our lives, driving progress and connecting us in new ways."
+        ],
+        hard: [
+            "In today's technologically advanced landscape, computers are ubiquitous, permeating every facet of our daily lives with their multifaceted capabilities. Whether in the realm of computational algorithms, data encryption, or digital frameworks, computers excel in executing complex processes with unparalleled precision.", 
+            "The central processing unit (CPU), often termed the \"brain\" of the computer, performs billions of calculations per second, enabling the seamless operation of intricate software applications. Consider the hexadecimal numeral system (base-16) utilized in computer programming, where digits range from 0 to 9 and letters from A to F, facilitating efficient data manipulation.", 
+            "This system, alongside binary (base-2) and decimal (base-10) systems, forms the backbone of computational logic. Furthermore, the integration of graphical processing units (GPUs) accelerates rendering tasks, vital for high-definition graphics and immersive virtual reality experiences.", 
+            "In cybersecurity, the use of robust cryptographic algorithms such as RSA (Rivest–Shamir–Adleman) and AES (Advanced Encryption Standard) ensures the confidentiality and integrity of sensitive data transmitted across networks.", 
+            "These algorithms employ complex mathematical operations involving large prime numbers and modular arithmetic, safeguarding information from unauthorized access. Moreover, the emergence of quantum computing represents a paradigm shift, promising exponential increases in processing power through quantum bits (qubits) and entanglement phenomena.", 
+            "This cutting-edge technology has profound implications for fields such as cryptography, optimization, and machine learning, potentially solving problems deemed intractable by classical computers. In software development, integrated development environments (IDEs) like Visual Studio Code and Eclipse offer coders a plethora of tools and extensions.", 
+            "These platforms support languages such as Python, JavaScript, and C++, facilitating the creation of sophisticated applications with enhanced functionality. On the hardware front, advancements in semiconductor technology have led to the miniaturization of transistors, crucial components within microprocessors.", 
+            "Moore's Law, which posits the doubling of transistors on integrated circuits approximately every two years, continues to drive innovation, albeit facing challenges as physical limits are approached. The Internet of Things (IoT) exemplifies the interconnectedness of devices, from smart thermostats to autonomous vehicles, each equipped with sensors and actuators, communicating via protocols like MQTT and CoAP.", 
+            "Such systems rely on real-time data processing and edge computing to deliver responsive and adaptive solutions. In summary, the intricate interplay of hardware and software in computers, coupled with emerging technologies and methodologies, underscores their pivotal role in shaping modern society.", 
+            "The relentless pursuit of advancement in this domain promises to unlock new potentials, redefining the boundaries of what is conceivable."
+        ]
+    };
+
+    let currentLevel = 0;
+    let currentParagraph = [];
+
+    function startTyping() {
+        const username = document.getElementById('username').value || "Player";
+        duration = parseInt(document.getElementById('duration').value);
+        startTime = new Date().getTime();
+        backspaceCount = 0;
+
+        document.getElementById('user-display').innerText = username;
+        document.getElementById('result-username').innerText = username;
+
+        document.getElementById('login').classList.add('hidden');
+        document.getElementById('typing-area').classList.remove('hidden');
+
+        const typingArea = document.getElementById('input-area');
+        typingArea.value = '';  // Clear previous input
+        typingArea.focus();
+        startTimer();
+    }
+
+    function openTypingTest() {
+        document.getElementById('login').classList.add('hidden');
+        document.getElementById('typing-test').classList.remove('hidden');
+        document.getElementById('paragraph-container').classList.add('hidden');
+    }
+
+    function startParagraphTest(difficulty) {
+        currentParagraph = paragraphs[difficulty];
+        currentLineIndex = 0;
+        document.getElementById('paragraph-line').innerText = currentParagraph[currentLineIndex];
+        document.getElementById('paragraph-input').value = '';
+        document.getElementById('accuracy-feedback').innerText = '';
+        document.getElementById('paragraph-speed').innerText = '0 WPM';
+        document.getElementById('paragraph-container').classList.remove('hidden');
+        paragraphStartTime = new Date().getTime();
+    }
+
+    function checkTyping() {
+        const typedText = document.getElementById('input-area').value.toUpperCase();
+        let matchedLevels = [];
+
+        for (let level in levelTexts) {
+            if (levelTexts[level].startsWith(typedText)) {
+                matchedLevels.push(parseInt(level));
+                // Show full text if matched
+                document.getElementById('level-instructions').innerText = `Type the following: ${levelTexts[level]}`;
+            }
+        }
+
+        currentLevel = matchedLevels.length > 0 ? Math.max(...matchedLevels) : currentLevel;
+
+        calculateSpeed(typedText);
+    }
+
+    function calculateSpeed(typedText) {
+        let currentTime = new Date().getTime();
+        let elapsedTime = currentTime - startTime;
+        let minutes = elapsedTime / 60000;
+        let wordsTyped = typedText.length / 5;
+        let speed = Math.round((wordsTyped / minutes) * 100) / 100;
+        document.getElementById('speed').innerText = `${speed} WPM`;
+    }
+
+    function trackKeys(event) {
+        if (event.key === "Backspace") {
+            backspaceCount++;
+        }
+        if (event.ctrlKey && event.key === 'v') {
+            event.preventDefault();
+        }
+    }
+
+    function checkParagraphLine() {
+        const currentLine = currentParagraph[currentLineIndex];
+        const typedText = document.getElementById('paragraph-input').value;
+        const paragraphLineElement = document.getElementById('paragraph-line');
+
+        let displayText = '';
+        let isCorrect = true;
+
+        for (let i = 0; i < typedText.length; i++) {
+            if (typedText[i] === currentLine[i]) {
+                displayText += `<span class="typed-correct">${typedText[i]}</span>`;
+            } else if (typedText[i] !== currentLine[i] && typedText[i] !== undefined) {
+                displayText += `<span class="typed-incorrect">${typedText[i]}</span>`;
+                isCorrect = false;
+            }
+        }
+
+        paragraphLineElement.innerHTML = displayText + currentLine.slice(typedText.length);
+
+        if (isCorrect && typedText.length === currentLine.length) {
+            moveToNextLine();
+        }
+
+        calculateParagraphSpeed(typedText);
+    }
+
+    function moveToNextLine() {
+        currentLineIndex++;
+        if (currentLineIndex < currentParagraph.length) {
+            document.getElementById('paragraph-line').innerText = currentParagraph[currentLineIndex];
+            document.getElementById('paragraph-input').value = '';
+            document.getElementById('accuracy-feedback').innerText = '';
+        } else {
+            displayCompletionImage();
+            endParagraphTest();
+        }
+    }
+
+    function calculateParagraphSpeed(typedText) {
+        let currentTime = new Date().getTime();
+        let elapsedTime = currentTime - paragraphStartTime;
+        let minutes = elapsedTime / 60000;
+        let wordsTyped = typedText.length / 5;
+        let speed = Math.round((wordsTyped / minutes) * 100) / 100;
+        document.getElementById('paragraph-speed').innerText = `${speed} WPM`;
+    }
+
+    function endTest() {
+        const typedText = document.getElementById('input-area').value;
+        const finalSpeed = document.getElementById('speed').innerText.split(" ")[0];
+        const grade = getGrade(parseInt(finalSpeed));
+        const wordsTyped = typedText.split(/\s+/).filter(word => word.length > 0).length;
+        const sentencesTyped = typedText.split(/[.!?]/).filter(sentence => sentence.length > 0).length;
+        const lettersTyped = typedText.replace(/\s/g, '').length;
+
+        // Calculate correct accuracy
+        const totalChars = typedText.length;
+        const correctChars = totalChars - backspaceCount;
+        const accuracy = totalChars > 0 ? ((correctChars / totalChars) * 100).toFixed(2) : 0;
+
+        document.getElementById('final-speed').innerText = `Your final typing speed is ${finalSpeed} WPM.`;
+        document.getElementById('grade').innerText = `Your grade is: ${grade} - ${getGradeMessage(grade)}`;
+        document.getElementById('accuracy').innerText = accuracy;
+        document.getElementById('backspaces').innerText = backspaceCount;
+        document.getElementById('words-typed').innerText = wordsTyped;
+        document.getElementById('sentences-typed').innerText = sentencesTyped;
+        document.getElementById('letters-typed').innerText = lettersTyped;
+
+        document.getElementById('typing-area').classList.add('hidden');
+        document.getElementById('result-area').classList.remove('hidden');
+    }
+
+    function endParagraphTest() {
+        const paragraphText = currentParagraph.join(" ");
+        const typedText = document.getElementById('paragraph-input').value;
+        const finalSpeed = document.getElementById('paragraph-speed').innerText.split(" ")[0];
+        const grade = getGrade(parseInt(finalSpeed));
+        
+        // Calculate correct accuracy
+        const totalChars = typedText.length;
+        const correctChars = totalChars - backspaceCount;
+        const accuracy = totalChars > 0 ? ((correctChars / totalChars) * 100).toFixed(2) : 0;
+
+        document.getElementById('final-speed').innerText = `Your final typing speed is ${finalSpeed} WPM.`;
+        document.getElementById('grade').innerText = `Your grade is: ${grade} - ${getGradeMessage(grade)}`;
+        document.getElementById('accuracy').innerText = accuracy;
+        document.getElementById('backspaces').innerText = backspaceCount;
+        document.getElementById('words-typed').innerText = typedText.split(/\s+/).filter(word => word.length > 0).length;
+        document.getElementById('sentences-typed').innerText = typedText.split(/[.!?]/).filter(sentence => sentence.length > 0).length;
+        document.getElementById('letters-typed').innerText = typedText.replace(/\s/g, '').length;
+
+        document.getElementById('typing-test').classList.add('hidden');
+        document.getElementById('result-area').classList.remove('hidden');
+    }
+
+    function displayCompletionImage() {
+        const completionImage = document.getElementById('completion-image');
+        completionImage.src = 'https://via.placeholder.com/150'; // Replace with your desired image URL
+        completionImage.classList.remove('hidden');
+    }
+
+    function getGrade(speed) {
+        if (speed >= 120) return 'A+';
+        if (speed >= 100) return 'A';
+        if (speed >= 85) return 'A-';
+        if (speed >= 70) return 'B+';
+        if (speed >= 55) return 'B';
+        if (speed >= 45) return 'B-';
+        if (speed >= 35) return 'C+';
+        if (speed >= 25) return 'C';
+        if (speed >= 15) return 'D';
+        return 'E';
+    }
+
+    function getGradeMessage(grade) {
+        switch (grade) {
+            case 'A+': return "Outstanding performance!";
+            case 'A': return "Excellent work!";
+            case 'A-': return "Great job, keep it up!";
+            case 'B+': return "Good effort!";
+            case 'B': return "Well done!";
+            case 'B-': return "Nice work!";
+            case 'C+': return "Keep practicing!";
+            case 'C': return "You're doing fine!";
+            case 'D': return "Needs improvement.";
+            case 'E': return "Keep trying!";
+            default: return "Keep practicing!";
+        }
+    }
+
+    function restartTest() {
+        document.getElementById('result-area').classList.add('hidden');
+        document.getElementById('login').classList.remove('hidden');
+        document.getElementById('input-area').value = '';
+        document.getElementById('speed').innerText = '0 WPM';
+        backspaceCount = 0;
+    }
+
+    function startTimer() {
+        let timeLeft = duration;
+        const timerInterval = setInterval(() => {
+            timeLeft -= 1000;
+            const minutes = Math.floor(timeLeft / 60000);
+            const seconds = (timeLeft % 60000 / 1000).toFixed(0);
+            document.getElementById('time-left').innerText = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                endTest();
+            }
+        }, 1000);
+    }
+
+    function printCertificate() {
+        let printContent = `
+            <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px;">
+                <h1 style="color: #0072ff;">DigitSync Typing Master Certificate</h1>
+                <p><b>Name:</b> ${document.getElementById('result-username').innerText}</p>
+                <p><b>Final Speed:</b> ${document.getElementById('final-speed').innerText}</p>
+                <p><b>Grade:</b> ${document.getElementById('grade').innerText}</p>
+                <p><b>Accuracy:</b> ${document.getElementById('accuracy').innerText}%</p>
+                <p><b>Backspaces Used:</b> ${document.getElementById('backspaces').innerText}</p>
+                <p><b>Words Typed:</b> ${document.getElementById('words-typed').innerText}</p>
+                <p><b>Sentences Typed:</b> ${document.getElementById('sentences-typed').innerText}</p>
+                <p><b>Letters Typed:</b> ${document.getElementById('letters-typed').innerText}</p>
+                <p style="margin-top: 20px;">Thank you for using DigitSync Typing Master!</p>
+            </div>
+        `;
+        
+        const newWindow = window.open('', '', 'width=800, height=600');
+        newWindow.document.write(printContent);
+        newWindow.document.close();
+        newWindow.print();
+    }
+</script>
+</body>
+</html>
